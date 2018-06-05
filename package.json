@@ -1,0 +1,38 @@
+{
+  "name": "gsm_client",
+  "version": "0.1.0",
+  "description": "NodeJS library to interact with the SIM800L module",
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "node dist/index.js",
+    "dev": "tsc --watch & nodemon dist",
+    "build": "tsc",
+    "tsc": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint src --ext ts"
+  },
+  "keywords": [
+    "gsm",
+    "sim",
+    "sim800",
+    "sim800l",
+    "gprs",
+    "sms",
+    "serial",
+    "call"
+  ],
+  "author": {
+    "name": "José Gamaliel Rivera Ibarra",
+    "email": "gama.rivera@gmail.com",
+    "url": "https://www.github.com/GamaRiverib"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@types/serialport": "^6.0.1",
+    "nodemon": "^1.17.5",
+    "typescript": "^2.8.4"
+  },
+  "dependencies": {
+    "serialport": "^6.2.0"
+  }
+}
