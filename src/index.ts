@@ -16,3 +16,15 @@ export function clean(arr: any[]): any[] {
     }
     return arr;
 }
+
+export * from './Battery';
+export * from './Gprs';
+export * from './GsmClient';
+export * from './Location';
+export * from './Modem';
+export * from './Network';
+export * from './Phone';
+export * from './Power';
+export * from './SimCard';
+export * from './Sms';
+export * from './Time';
