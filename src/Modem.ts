@@ -16,6 +16,7 @@ export interface ModemResponse {
 }
 
 export interface IModem {
+    isOpen(): boolean;
     open(): Promise<void>;
     close(): Promise<void>;
     send(command: string | AtCommand): Promise<ModemResponse>;
@@ -31,6 +32,7 @@ interface TailItem {
 
 export class Modem implements IModem {
 
+    private isOpened: boolean = false;
     private response: string = '';
 
     private tail: TailItem[] = [];
@@ -46,6 +48,7 @@ export class Modem implements IModem {
     private readonly SEND_CHAR: string = String.fromCharCode(this.LF);
     private readonly CONTROL: string = String.fromCharCode(62, 32);
     private readonly CTRL_Z_ESC: string = String.fromCharCode(26);
+    private readonly DOWNLOAD: RegExp = /DOWNLOAD$/i;
 
     private readonly MESSAGE_END: RegExp = /\r\n(OK|ERROR|BUSY|DATA|NO CARRIER)\r\n$|(CONNECT( .+)*$)\r\n$/i;
 
@@ -61,15 +64,16 @@ export class Modem implements IModem {
 
     private onCloseEventHandler(err?: Error): void {
         // console.log('onclose', err);
+        this.isOpened = false;
     }
 
     private onDataEventHandler(buffer: Buffer): void {
         this.response += buffer.toString();
         if(this.response.match(this.MESSAGE_END)) {
-            // console.log(this.response.replace(/\r/g, '<CR>').replace(/\n/g,'<LF>'));
+            console.log('[cmd]', this.response.replace(/\r/g, '<CR>').replace(/\n/g,'<LF>'));
             let lines: string[] = this.response.split(this.LINE_END);
             this.response = '';
-            // console.log(lines);
+            console.log(lines);
             if(lines.length > 2 && this.tail.length > 0) {
                 let item: TailItem = this.tail.shift();
                 if (item.timer) {
@@ -89,6 +93,27 @@ export class Modem implements IModem {
                 }
             }
             this.sendNextItem();
+        } else if(this.response.match(this.DOWNLOAD)){
+            console.log('[mode]', this.response.replace(/\r/g, '<CR>').replace(/\n/g,'<LF>'));
+            if(this.tail.length > 0) {
+                let item: TailItem = this.tail[0];
+                console.log(item);
+                let cmd: AtCommand = item.atCommand;
+                if(cmd.pdu) {
+                    this.serialPort.write(cmd.pdu, cmd.encoding || 'ascii', (err: any, bytesWritten: number) => {
+                        console.log(cmd.pdu);
+                        /*if(item.timer) {
+                            clearTimeout(item.timer);
+                        }
+                        if(err) {
+                            return item.errorCallback(err);
+                        }
+                        let res: ModemResponse = { atCommand: item.atCommand.command };
+                        item.successCallback(res); // TODO
+                        this.sendNextItem();*/
+                    });
+                }
+            }
         } else if(this.response.endsWith(this.LINE_END) && this.tail.length == 0) {
             if(this.onData) {
                 this.onData(this.response.toString());
@@ -100,6 +125,7 @@ export class Modem implements IModem {
             this.response = '';
             if(this.tail.length > 0) {
                 let item: TailItem = this.tail.shift();
+                console.log('item', item);
                 let cmd: AtCommand = item.atCommand;
                 if (cmd.pdu) {
                     this.serialPort.write(cmd.pdu, cmd.encoding || 'ascii', (err: any, bytesWritten: number) => {
@@ -128,6 +154,7 @@ export class Modem implements IModem {
 
     private onOpenEventHandler(err?: Error): void {
         // console.log('onopen', err);
+        this.isOpened = true;
     }
 
     private sendNextItem(): void {
@@ -152,6 +179,10 @@ export class Modem implements IModem {
         if(this.tail.length == 1) {
             this.sendNextItem();
         }
+    }
+
+    public isOpen(): boolean {
+        return this.isOpened;
     }
 
     public open(): Promise<void> {

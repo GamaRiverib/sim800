@@ -22,19 +22,7 @@ export interface AtCommand {
     encoding?: 'ascii' | 'utf8' | 'utf16le' | 'ucs2' | 'base64' | 'binary' | 'hex';
 }
 
-export interface IAtCommands {
-    at(): AtCommand;
-    isOk(res: string): boolean;
-    getBasicCommand(x: string, n?: string): AtCommand;
-    getBasicAmpersandCommand(x: string, n?: string): AtCommand;
-    getSParameterCommand(n: string, ...m: string[]): AtCommand;
-    getExtendedCommandTest(x: string): AtCommand;
-    getExtendedCommandRead(x: string): AtCommand;
-    getExtendedCommandWrite(x: string, ...v: any[]): AtCommand;
-    getExtendedCommandExecution(x: string): AtCommand;
-}
-
-export class AtCommands implements IAtCommands {
+export class AtCommands {
 
     protected static readonly BASIC_COMMAND_SYNTAX = 'at{x}{n}';
     protected static readonly BASIC_AMPERSAND_COMMAND_SYNTAX = 'at&{x}{n}';
@@ -49,6 +37,10 @@ export class AtCommands implements IAtCommands {
     protected static readonly COMMAND_RESPONSE_SYNTAX = '\r\n{response}\r\n'; // TODO: regex
 
     protected static readonly CME_ERROR_SYNTAX = '+CME ERROR: {error}'; // TODO: Regex
+
+    constructor() {
+
+    }
 
     at(): AtCommand {
         return {

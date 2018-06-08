@@ -18,6 +18,7 @@ export function clean(arr: any[]): any[] {
 }
 
 export * from './Battery';
+export * from './Email';
 export * from './Gprs';
 export * from './GsmClient';
 export * from './Location';

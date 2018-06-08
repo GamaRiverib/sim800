@@ -1,6 +1,6 @@
-import { IModem, ModemResponse } from "./Modem";
-import { AtCommandsV25TER, IAtCommandsV25TER } from "./at/AtCommandsV25TER";
-import { ExtendCommandModes, AtCommand } from "./at/AtCommands";
+import { IModem } from "./Modem";
+import { AtCommandsV25TER } from "./at/AtCommandsV25TER";
+import { ExtendCommandModes } from "./at/AtCommands";
 import { Power } from "./Power";
 import { SimCard } from "./SimCard";
 import { Network } from "./Network";
@@ -12,6 +12,7 @@ import { Time } from "./Time";
 import { Battery } from "./Battery";
 import { EventEmitter } from 'events';
 import { UnsolicitedResultCodes, UnsolicitedResultCode } from "./at/UnsolicitedResultCodes";
+import { Email } from "./Email";
 
 export interface IGsmClient {
 
@@ -36,6 +37,7 @@ export interface IGsmClient {
     gprs: Gprs;
     phone: Phone;
     sms: Sms;
+    email: Email;
     location: Location;
     time: Time;
     battery: Battery;
@@ -45,7 +47,7 @@ export class GenericGsmClient implements IGsmClient {
 
     private eventEmmiter: EventEmitter;
 
-    private atCommands: IAtCommandsV25TER;
+    private atCommands: AtCommandsV25TER;
     private unsolicitedResultCodes: UnsolicitedResultCodes;
 
     power: Power;
@@ -54,6 +56,7 @@ export class GenericGsmClient implements IGsmClient {
     gprs: Gprs;
     phone: Phone;
     sms: Sms;
+    email: Email;
     location: Location;
     time: Time;
     battery: Battery;    
@@ -71,6 +74,7 @@ export class GenericGsmClient implements IGsmClient {
         this.gprs = new Gprs(this.modem);
         this.phone = new Phone(this.modem);
         this.sms = new Sms(this.modem);
+        this.email = new Email(this.modem);
         this.location = new Location(this.modem);
         this.time = new Time(this.modem);
         this.battery = new Battery(this.modem);
@@ -99,6 +103,16 @@ export class GenericGsmClient implements IGsmClient {
         }
     }
 
+    private open(): Promise<boolean> {
+        return new Promise<boolean>((resolve, reject) => {
+            this.modem.open().then(() => {
+                console.log('Modem open');
+                let atCommand = this.atCommands.at();
+                this.modem.send(atCommand).then(res => resolve()).catch(reject);
+            }).catch(reject);
+        });
+    }
+
     on(event: string, handler: (...args: any[]) => void): void {
         this.eventEmmiter.addListener(event, handler);
     }
@@ -107,12 +121,14 @@ export class GenericGsmClient implements IGsmClient {
      * Initialize the Gsm client
      */
     start(): Promise<boolean> {
-        return new Promise<boolean>((resolve, reject) => {
-            this.modem.open().then(() => {
+        if (this.modem.isOpen()) {
+            return new Promise<boolean>((resolve, reject) => {
                 let atCommand = this.atCommands.at();
                 this.modem.send(atCommand).then(res => resolve()).catch(reject);
-            }).catch(reject);
-        });
+            });
+        } else {
+            return this.open();
+        }
     }
 
     end(): Promise<void> {
@@ -158,7 +174,7 @@ export class GenericGsmClient implements IGsmClient {
      * Request International Mobile Subscriber Identity
      */
     subscriberId(): Promise<string> {
-        let atCommand = this.atCommands.getExtendedCommandExecution('cimi');
+        let atCommand = this.atCommands.at_cimi(ExtendCommandModes.EXECUTION);
         return new Promise<string>((resolve, reject) => {
             this.modem.send(atCommand).then(res => resolve(res.lines[0])).catch(reject);
         });
@@ -169,7 +185,7 @@ export class GenericGsmClient implements IGsmClient {
      */
     serviceProviderName(): Promise<string> {
         return new Promise<string>((resolve, reject) => {
-            let atCommand = this.atCommands.getExtendedCommandRead('cspn');
+            let atCommand = this.atCommands.at_cspn();
             this.modem.send(atCommand).then(res => resolve(res.lines[0])).catch(reject);
         });
     }

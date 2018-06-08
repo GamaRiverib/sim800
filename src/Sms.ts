@@ -1,7 +1,7 @@
 import { IModem } from './Modem';
-import { AtCommands3GPP27005, IAtCommands3GPP27005 } from './at/AtCommands3GPP27005';
+import { AtCommands3GPP27005 } from './at/AtCommands3GPP27005';
 import { setQuotationMarks } from '.';
-import { ExtendCommandModes, AtCommand } from './at/AtCommands';
+import { ExtendCommandModes } from './at/AtCommands';
 
 export interface SmsInfo {
     index: number;
@@ -14,7 +14,7 @@ export interface SmsInfo {
 
 export class Sms {
     
-    private cmds: IAtCommands3GPP27005;
+    private cmds: AtCommands3GPP27005;
     
     constructor(private modem: IModem) {
         this.cmds = new AtCommands3GPP27005();
@@ -22,7 +22,7 @@ export class Sms {
 
     sendUssd(code: string): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            this.modem.send(this.cmds.getExtendedCommandWrite('cusd', 1, setQuotationMarks(code)))
+            this.modem.send(this.cmds.at_cusd(ExtendCommandModes.WRITE, 1, setQuotationMarks(code)))
                 .then(res => resolve())
                 .catch(reject);
         });
@@ -32,10 +32,10 @@ export class Sms {
         return new Promise<boolean>((resolve, reject) => {
             this.modem.send(this.cmds.at_cmgf(ExtendCommandModes.WRITE, 1))
                 .then(res => {
-                    return this.modem.send(this.cmds.getExtendedCommandWrite('cscs', '\"GSM\"'));
+                    return this.modem.send(this.cmds.at_cscs(ExtendCommandModes.WRITE, '\"GSM\"'));
                 }).then(res => {
                     let msg = message + String.fromCharCode(26); // TODO: validar longitud
-                    let atCmd = this.cmds.at_cmgs(da); // TODO: special characters?
+                    let atCmd = this.cmds.at_cmgs(setQuotationMarks(da)); // TODO: special characters?
                     atCmd.pdu = msg;
                     return this.modem.send(atCmd);
                 })

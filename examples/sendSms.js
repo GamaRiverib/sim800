@@ -8,7 +8,7 @@ gsmClient.start().then(function() {
         close();
     });
 
-    gsmClient.sms.sendSms('+526449975249', 'No hay Saldo').then(function(res) {
+    gsmClient.sms.sendSms('+123456789012', 'Hello Friend!').then(function(res) {
         console.log('Send SMS done!');
     }).catch(handleError);
 }).catch(handleError);
